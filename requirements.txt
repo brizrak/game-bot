@@ -1,0 +1,2 @@
+aiogram==3.13.1
+environs==11.0.0
