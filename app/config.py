@@ -1,16 +1,17 @@
-from environs import Env
-from dataclasses import dataclass
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-@dataclass
-class Config:
+class Config(BaseSettings):
+    model_config = SettingsConfigDict(env_file='.env', extra='allow')
+
     BOT_TOKEN: str
 
+    REDIS_HOST: str
+    REDIS_PORT: int
+    REDIS_DB: int
 
-def load_config() -> Config:
-    env = Env()
-    env.read_env()
+    def dsn(self) -> str:
+        return f"redis://{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
 
-    return Config(
-        BOT_TOKEN=env.str("BOT_TOKEN"),
-    )
+
+config = Config()
