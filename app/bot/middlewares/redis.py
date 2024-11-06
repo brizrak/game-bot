@@ -22,6 +22,7 @@ class RedisMiddleware(BaseMiddleware):
 
         user: User = data.get("event_from_user")
         user_redis = await redis.get_user(user.id)
+        print(user_redis)
 
         user_data = user_redis or UserData(
             id=user.id,
