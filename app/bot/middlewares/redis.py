@@ -3,9 +3,10 @@ from typing import Callable, Dict, Any, Awaitable
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, User
 from redis.asyncio import Redis
+from pydantic import ValidationError
 
 from app.bot.utils.redis import RedisStorage
-from app.bot.utils.models import UserData
+from app.bot.utils.models import UserData, Stats
 
 
 class RedisMiddleware(BaseMiddleware):
@@ -21,14 +22,34 @@ class RedisMiddleware(BaseMiddleware):
         redis = RedisStorage(self.redis)
 
         user: User = data.get("event_from_user")
-        user_redis = await redis.get_user(user.id)
-        print(user_redis)
+        try:
+            user_redis = await redis.get_user(user.id)
+        except ValidationError as exc:
+            user_redis = None
 
         user_data = user_redis or UserData(
             id=user.id,
             full_name=user.full_name,
             score=0,
             balance=1000,
+            blackjack_stats=Stats(
+                total_games=0,
+                wins=0,
+                loses=0,
+                draws=0,
+            ),
+            seabattle_stats=Stats(
+                total_games=0,
+                wins=0,
+                loses=0,
+                draws=0,
+            ),
+            fool_stats=Stats(
+                total_games=0,
+                wins=0,
+                loses=0,
+                draws=0,
+            ),
         )
         if user_redis:
             user_data.full_name = user.full_name

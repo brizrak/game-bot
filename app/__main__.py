@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.redis import RedisStorage
 
 from app.config import config
-from app.bot import include_routers
+from app.bot.handlers import include_routers
 from app.bot.middlewares import register_middlewares
 from app.bot import commands
 
