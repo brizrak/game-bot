@@ -1,9 +1,14 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from environs import Env
+from dataclasses import dataclass
 
 class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file='.env', extra='allow')
 
+const_path = "C:\\Users\\Admin\\PycharmProjects\\game-bot\\app\\колода52"
+const_path1 = "C:\\Users\\Admin\\PycharmProjects\\game-bot\\app\\users_result"
+@dataclass
+class Config:
     BOT_TOKEN: str
 
     REDIS_HOST: str
