@@ -1,6 +1,8 @@
 from random import shuffle
-lobby_list = [(250,1000), (1000,5000),(5000,15000)]
+
+lobby_list = [(250, 1000), (1000, 5000), (5000, 15000)]
 money = 10000
+
 
 def create_deck():
     mast_list = ["cherv", "boob", "chip", "cross"]
