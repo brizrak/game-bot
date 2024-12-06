@@ -12,7 +12,6 @@ from app.config import config
 from app.bot.handlers.blackjack.datas import lobby_list, money, create_deck
 from app.bot.handlers.blackjack.keyboard import bet_kb, make_bet_kb, gg, gg1, gg2, final_kb, split_kb
 from app.bot.handlers.states import BlackjackStates
-
 router = Router()
 
 
@@ -31,6 +30,7 @@ def scoring(deck):
     return score
 
 
+@router.message(F.text == "/play")
 async def play_start(message: Message, state: FSMContext):
     uid = message.from_user.id
     slovar = await state.get_data()
