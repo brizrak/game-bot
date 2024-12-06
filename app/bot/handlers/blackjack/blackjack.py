@@ -161,7 +161,7 @@ async def bet_make(callback: CallbackQuery, state: FSMContext, bot: Bot):
         await callback.message.answer(f"Выберите действие: ", reply_markup=gg1)
     elif action == True:
         await callback.message.answer(f"Выберите действие: ", reply_markup=gg2)
-        slovar["Action"] = False
+
     await state.update_data(slovar)
 
 
@@ -341,7 +341,10 @@ async def take_card(message: Message, state: FSMContext, bot: Bot):
 
 @router.message(F.text == "Хватит")
 async def hvatit(message: Message, state: FSMContext, bot: Bot):
+    print("huyki")
     slovar = await state.get_data()
+    print(slovar["Action"])
+
     pdeck = slovar["Колода игрока"]
     cdeck = slovar["Колода компа"]
     deck = slovar["Остаток колоды"]
