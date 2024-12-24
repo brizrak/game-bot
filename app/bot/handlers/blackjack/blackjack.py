@@ -56,6 +56,7 @@ async def play_start(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "yes")
 @router.callback_query(BlackjackStates.one_more)
+@router.callback_query(F.data == 'lobby')
 async def play(callback: CallbackQuery, state: FSMContext):
     await callback.answer()  # Подтверждение нажатия кнопки
     slovar = await state.get_data()
@@ -340,11 +341,11 @@ async def double(message: Message, state: FSMContext, bot: Bot):
         await message.answer("Выберите действие: ", reply_markup=gg1)
 
 
-@router.callback_query(F.data == 'lobby')
-async def exit(callback:CallbackQuery,state:FSMContext):
-    print("sasi")
-    kb = bet_kb(lobby_list)
-    await callback.message.answer(text="Выберите лобби: ", reply_markup=kb)
+# @router.callback_query(F.data == 'lobby')
+# async def exit(callback:CallbackQuery,state:FSMContext):
+#     print("sasi")
+#     kb = bet_kb(lobby_list)
+#     await callback.message.answer(text="Выберите лобби: ", reply_markup=kb)
 
 # @router.callback_query(F.data == 'menu')
 # async def exit(callback:CallbackQuery,state:FSMContext):
