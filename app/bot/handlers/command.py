@@ -20,6 +20,11 @@ async def handler(message: Message, user_data: UserData, state: FSMContext) -> N
     await Window.stats(message, user_data, state)
 
 
+@router.message(Command("rules"))
+async def handler(message: Message, state: FSMContext) -> None:
+    await Window.rules(message, state)
+
+
 @router.message(Command("plus"))
 async def handler(message: Message, user_data: UserData, redis: RedisStorage) -> None:
     user_data.blackjack_stats.total_games += 4
