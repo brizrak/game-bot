@@ -23,11 +23,11 @@ async def on_startup(bot: Bot) -> None:
 async def main() -> None:
     logging.basicConfig(level=logging.INFO)
     bot = Bot(config.BOT_TOKEN)
-    # storage = RedisStorage.from_url(
-    #     url=config.dsn(),
-    # )
-    dp = Dispatcher(bot=bot)
-    # register_middlewares(dp=dp, redis=storage.redis)
+    storage = RedisStorage.from_url(
+        url=config.dsn(),
+    )
+    dp = Dispatcher(bot=bot, storage=storage)
+    register_middlewares(dp=dp, redis=storage.redis)
 
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)

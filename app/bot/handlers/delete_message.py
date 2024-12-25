@@ -13,6 +13,17 @@ async def delete_message(bot: Bot, chat_id: int, message_id: int) -> None:
 
 async def delete_previous_message(state: FSMContext, message: Message) -> None:
     data = await state.get_data()
-    if "old_message" in data and data["old_message"]:
-        await delete_message(message.bot, message.chat.id, data["old_message"])
-        await state.update_data(old_message={})
+    if "old_messages" in data and data["old_messages"]:
+        for msg in data["old_messages"]:
+            await delete_message(message.bot, message.chat.id, msg)
+        await state.update_data(old_messages=[])
+
+
+async def add_message(state: FSMContext, message: Message) -> None:
+    data = await state.get_data()
+    if "old_messages" in data and data["old_messages"]:
+        messages = data["old_messages"]
+    else:
+        messages = []
+    messages.append(message.message_id)
+    await state.update_data(old_messages=messages)

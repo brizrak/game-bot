@@ -1,7 +1,6 @@
 from random import shuffle
 
 lobby_list = [(250, 1000), (1000, 5000), (5000, 15000)]
-money = 10000
 
 
 def create_deck():
@@ -17,3 +16,15 @@ def create_deck():
     shuffle(deck)
     shuffle(deck)
     return deck
+
+
+def stavkas():
+    bet_list = []
+    for bet0, bet1 in lobby_list:
+        x = int(bet1) / int(bet0) + 1
+        for i in range(1, int(x)):
+            bet_list.append(int(bet0) * i)
+    return bet_list
+
+
+all_stavkas = stavkas()

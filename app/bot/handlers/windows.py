@@ -3,7 +3,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.context import FSMContext
 
 from app.bot.utils.models import UserData
-from app.bot.handlers.delete_message import delete_previous_message
+from app.bot.handlers.delete_message import delete_previous_message, add_message
 
 
 def game_choice() -> InlineKeyboardMarkup:
@@ -19,13 +19,14 @@ def game_choice() -> InlineKeyboardMarkup:
 
 class Window:
     @staticmethod
-    async def main_menu(message: Message, user_data: UserData, state: FSMContext) -> None:
+    async def main_menu(message: Message, user_data: UserData, state: FSMContext, is_command: bool = False) -> None:
         await delete_previous_message(state, message)
         text = f"Привет🖐\n\nВаш баланс: {user_data.balance}\nВаш счет: {user_data.score}\n\nВыберите игру:"
         reply_markup = game_choice()
         msg = await message.answer(text=text, reply_markup=reply_markup)
-        await state.update_data(old_message=msg.message_id)
-        await message.delete()
+        await add_message(state, msg)
+        if is_command:
+            await message.delete()
 
     @staticmethod
     async def stats(message: Message, user_data: UserData, state: FSMContext) -> None:
@@ -47,5 +48,5 @@ class Window:
                 f"\n\tПоражений: {user_data.fool_stats.loses}"
                 f"\n\tНичьих: {user_data.fool_stats.draws}")
         msg = await message.answer(text=text)
-        await state.update_data(old_message=msg.message_id)
+        await add_message(state, msg)
         await message.delete()

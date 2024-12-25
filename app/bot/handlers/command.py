@@ -12,7 +12,7 @@ router = Router()
 
 @router.message(CommandStart())
 async def handler(message: Message, user_data: UserData, state: FSMContext) -> None:
-    await Window.main_menu(message, user_data, state)
+    await Window.main_menu(message, user_data, state, True)
 
 
 @router.message(Command("stats"))
