@@ -5,7 +5,6 @@ import asyncio
 from aiogram import Router, F, Bot
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery, FSInputFile
-from aiogram.filters.callback_data import CallbackData
 
 from PIL import Image
 
@@ -354,6 +353,7 @@ async def hvatit(message: Message, state: FSMContext, bot: Bot, user_data: UserD
                 messages.append(msg.message_id)
 
 
+
         elif player_score == comp_score:
             await message.answer(f"Ничья! Ваш баланс: {money}")
             await asyncio.sleep(1)
@@ -361,6 +361,7 @@ async def hvatit(message: Message, state: FSMContext, bot: Bot, user_data: UserD
             # await state.clear()
             msg = await message.answer(f"Хотите сыграть еще раз?", reply_markup=final_kb)
             messages.append(msg.message_id)
+        user_data.balance = money
 
         slovar["old_messages"] = messages
         await state.update_data(slovar)
