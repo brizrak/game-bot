@@ -262,7 +262,7 @@ async def start_game(callback: CallbackQuery, state: FSMContext, bot: Bot):
         while comp_deck[cdeck_card][0] == trump_type:
             cdeck_card -= 1
             if cdeck_card < 0:
-                cdeck_card = 6
+                cdeck_card = 5
         slovar["field"].append([comp_deck.pop(cdeck_card)])
         comp_deck = sort_deck(comp_deck)
         slovar["Колода компа"] = comp_deck
