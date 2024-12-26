@@ -14,6 +14,7 @@ from app.config import config
 from app.bot.handlers.fool.datas import lobby_list, money, create_deck
 from app.bot.handlers.fool.keyboard import startupplayonly, playonly, playpass, playtake, playbeaten, final_kb, weirdfinal_kb
 from app.bot.handlers.states import FoolStates
+from app.bot.handlers.delete_message import delete_previous_message, add_message
 
 from app.bot.utils.redis import RedisStorage
 from app.bot.utils.models import UserData
@@ -243,7 +244,9 @@ async def start_game(callback: CallbackQuery, state: FSMContext, bot: Bot):
 
     # money_bet_check = money - int(callback.data)
     # await callback.message.answer(f"Ваша ставка: {callback.data}")
-    await callback.message.answer(f"Раздаем картишки...")
+    messages = []
+    msg = await callback.message.answer(f"Раздаем картишки...")
+    messages.append(msg)
     await callback.answer()
     time.sleep(1)
     deck = create_deck()
@@ -259,7 +262,8 @@ async def start_game(callback: CallbackQuery, state: FSMContext, bot: Bot):
         deck.append(last_card)
         player_deck = [deck.pop(0), deck.pop(1), deck.pop(2), deck.pop(3), deck.pop(4), deck.pop(5)]
         comp_deck = [deck.pop(0), deck.pop(0), deck.pop(0), deck.pop(0), deck.pop(0), deck.pop(0)]
-        await callback.message.answer(f"Перераздаем картишки...")
+        msg = await callback.message.answer(f"Перераздаем картишки...")
+        messages.append(msg)
         time.sleep(1)
     if highest_trump_card_value(player_deck, trump_type) > highest_trump_card_value(comp_deck, trump_type):
         slovar["attacker"] = False
@@ -281,15 +285,19 @@ async def start_game(callback: CallbackQuery, state: FSMContext, bot: Bot):
     print(f"Игрок зашел в игру!\n Field: {field}\n Player deck: {player_deck}\n Comp deck: {comp_deck}\n Deck: {deck}")
     message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck, slovar["Айди"])
     document = FSInputFile(os.path.join(config.RESULT_PATH, f"fool_result_image_{slovar['Айди']}.jpg"))
-    await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
+    msg = await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
                          caption=message)
+    messages.append(msg)
     # await callback.message.answer()
     if slovar["attacker"]:
-        await callback.message.answer(f"Выберите действие: ", reply_markup=playonly)
+        msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playonly)
     else:
-        await callback.message.answer(f"Выберите действие: ", reply_markup=playtake)
+        msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playtake)
         # await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
         # caption=f"Ваш счет: {player_score}\nСчет дилера: {comp_score}")
+    messages.append(msg)
+    for MMM in messages:
+        await add_message(state, MMM)
 
 
 async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
@@ -304,6 +312,7 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
     comp_takes = slovar["comp_takes"]
     should_take_cards = False
     ai_won = False
+    messages = []
     if (len(player_deck) > 0 and len(comp_deck) > 0) or len(deck) or slovar["comp_takes"] or slovar["player_takes"]:
         should_get_a_turn = 1
         #print(f"ИИшка пытаешься сходить, карт в колоде: {len(deck)}; карт у игрока и бота: {len(player_deck)}; {len(comp_deck)}")
@@ -338,7 +347,8 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
                     field.append([comp_deck.pop(0)])
                 if not (any(len(element) == 1 for element in field)) and not (player_takes):
                     # Бито
-                    await callback.message.answer(f"Бито!")
+                    msg = await callback.message.answer(f"Бито!")
+                    messages.append(msg)
                     if len(deck):
                         should_take_cards = True
                     attacker = True
@@ -361,7 +371,8 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
                                 cards_taken_line += "\n"
                             # print(f" {card}", end = "")
                             player_deck.append(card)
-                    await callback.message.answer("" + cards_taken_line)
+                    msg = await callback.message.answer("" + cards_taken_line)
+                    messages.append(msg)
                     # print("")
                     field.clear()
                     # time.sleep(1)
@@ -387,7 +398,8 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
                     ai_won = True
                     break;           
                 if any(len(element) == 1 for element in field):
-                    await callback.message.answer(f"Беру! Докидываете?")
+                    msg = await callback.message.answer(f"Беру! Докидываете?")
+                    messages.append(msg)
                     print("Комп: Беру!")
                     comp_takes = True
                     time.sleep(1)
@@ -401,7 +413,8 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
                     if len(comp_deck) < 6 and len(deck):
                         comp_deck.append(deck.pop(0))
                     if not (len(deck)):
-                        await callback.message.answer("Конец колоды!")
+                        msg = await callback.message.answer("Конец колоды!")
+                        messages.append(msg)
 
             slovar["Колода игрока"] = player_deck
             slovar["Колода компа"] = comp_deck
@@ -420,23 +433,26 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
             # await message.answer(stich_generic_trump_field_deck_message(player_deck, field, trump_type, deck, slovar["Айди"]))
             message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck,slovar["Айди"])
             document = FSInputFile(os.path.join(config.RESULT_PATH, f"fool_result_image_{slovar['Айди']}.jpg"))
-            await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
+            msg = await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
                                  caption=message)
+            messages.append(msg)
             if slovar["attacker"] and not (len(field)):
-                await callback.message.answer(f"Выберите действие: ", reply_markup=playonly)
+                msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playonly)
             elif slovar["attacker"] and all(len(element) == 2 for element in field):
-                await callback.message.answer(f"Выберите действие: ", reply_markup=playbeaten)
+                msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playbeaten)
             elif not (slovar["attacker"]) and any(len(element) == 1 for element in field):
-                await callback.message.answer(f"Выберите действие: ", reply_markup=playtake)
+                msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playtake)
             else:
-                await callback.message.answer(f"Выберите действие: ", reply_markup=playpass)
+                msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playpass)
+            messages.append(msg)
         else:
             print(f"Игрок проиграл: {len(deck)}; карт у игрока и бота: {len(player_deck)}; {len(comp_deck)}")
             # UserData.fool_stats.total_games += 1
             # UserData.fool_stats.loses += 1
             # UserData.balance -= 100
             # await RedisStorage.update_user(UserData.id, UserData)
-            await callback.message.answer(f"Игра окончена, вы проиграли!", reply_markup=weirdfinal_kb)
+            msg = await callback.message.answer(f"Игра окончена, вы проиграли!", reply_markup=weirdfinal_kb)
+            messages.append(msg)
             await state.update_data(slovar)
             await state.set_state(FoolStates.itog)
 
@@ -447,17 +463,20 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
             # UserData.fool_stats.loses += 1
             # UserData.balance -= 100
             # await RedisStorage.update_user(UserData.id, UserData)
-            await callback.message.answer(f"Игра окончена, вы проиграли!", reply_markup=weirdfinal_kb)
+            msg = await callback.message.answer(f"Игра окончена, вы проиграли!", reply_markup=weirdfinal_kb)
         else:
             print(f"Игрок выиграл: {len(deck)}; карт у игрока и бота: {len(player_deck)}; {len(comp_deck)}")
             # UserData.fool_stats.total_games += 1
             # UserData.fool_stats.wins += 1
             # UserData.balance += 100
             # await RedisStorage.update_user(UserData.id, UserData)
-            await callback.message.answer(f"Игра окончена, вы победили!", reply_markup=weirdfinal_kb)
+            msg = await callback.message.answer(f"Игра окончена, вы победили!", reply_markup=weirdfinal_kb)
+        messages.append(msg)
         await state.update_data(slovar)
         await state.set_state(FoolStates.itog)
-
+    await delete_previous_message(state, callback.message)
+    for MMM in messages:
+        await add_message(state, MMM)
 
 @router.callback_query(F.data == 'foolplaycard')
 # choosing_card
@@ -480,11 +499,12 @@ async def play_card(query: CallbackQuery, state: FSMContext, bot: Bot):
             builder.add(InlineKeyboardButton(text=the_string, callback_data=f"cardnum_{i + 1}"))
     builder.adjust(3)
     await query.answer()
-    await query.message.answer(
+    msg = await query.message.answer(
         "Выберите карту (показаны только те, что можно разыграть):",
         reply_markup=builder.as_markup(resize_keyboard=True),
     )
     await state.set_state(FoolStates.choosing_card)
+    await add_message(state, msg)
 
 
 @router.callback_query(FoolStates.choosing_card)
@@ -496,6 +516,7 @@ async def playing_the_card_thing(query: CallbackQuery, state: FSMContext, bot: B
     trump_type = slovar["Козырь"]
     field = slovar["field"]
     attacker = slovar["attacker"]
+    messages = []
     if query.data.startswith("cardnum_"):
         pdeck_card = int(query.data.split("_")[1])
         if not (len(field)) or target_is_valid_card_to_play(player_deck[pdeck_card - 1], field, trump_type, len(comp_deck), attacker):
@@ -516,34 +537,42 @@ async def playing_the_card_thing(query: CallbackQuery, state: FSMContext, bot: B
             # await query.message.answer(stich_generic_trump_field_deck_message(player_deck, field, trump_type, deck, slovar["Айди"]))
             message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck, slovar["Айди"])
             document = FSInputFile(os.path.join(config.RESULT_PATH, f"fool_result_image_{slovar['Айди']}.jpg"))
-            await bot.send_photo(chat_id=query.message.chat.id, photo=document,
+            msg = await bot.send_photo(chat_id=query.message.chat.id, photo=document,
                                  caption=message)
+            messages.append(msg)
             if attacker and all(len(element) == 2 for element in field):
-                await query.message.answer(f"Сыграть еще карту?", reply_markup=playbeaten)
+                msg = await query.message.answer(f"Сыграть еще карту?", reply_markup=playbeaten)
             elif not (attacker) and any(len(element) == 1 for element in field):
-                await query.message.answer(f"Сыграть еще карту?", reply_markup=playtake)
+                msg = await query.message.answer(f"Сыграть еще карту?", reply_markup=playtake)
             else:
-                await query.message.answer(f"Сыграть еще карту?", reply_markup=playpass)
+                msg = await query.message.answer(f"Сыграть еще карту?", reply_markup=playpass)
+            messages.append(msg)
             await query.answer()
             await state.set_state(FoolStates.game_is_on)
         else:
             print("Вы не можете сыграть эту карту!")
+            msg = await query.message.answer(f"Походу все сломалось", reply_markup=playpass)
+            messages.append(msg)
     else:
         # await query.message.answer(stich_generic_trump_field_deck_message(player_deck, field, trump_type, deck, slovar["Айди"]))
         message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck, slovar["Айди"])
         document = FSInputFile(os.path.join(config.RESULT_PATH, f"fool_result_image_{slovar['Айди']}.jpg"))
         await query.answer()
         await state.set_state(FoolStates.game_is_on)
-        await bot.send_photo(chat_id=query.message.chat.id, photo=document,
+        msg = await bot.send_photo(chat_id=query.message.chat.id, photo=document,
                              caption=message)
+            messages.append(msg)
         if slovar["attacker"] and not (len(field)):
-            await query.message.answer(f"Выберите действие: ", reply_markup=playonly)
+            msg = await query.message.answer(f"Выберите действие: ", reply_markup=playonly)
         elif slovar["attacker"] and all(len(element) == 2 for element in field):
-            await query.message.answer(f"Выберите действие: ", reply_markup=playbeaten)
+            msg = await query.message.answer(f"Выберите действие: ", reply_markup=playbeaten)
         elif not (slovar["attacker"]) and any(len(element) == 1 for element in field):
-            await query.message.answer(f"Выберите действие: ", reply_markup=playtake)
+            msg = await query.message.answer(f"Выберите действие: ", reply_markup=playtake)
         else:
-            await query.message.answer(f"Выберите действие: ", reply_markup=playpass)
+            msg = await query.message.answer(f"Выберите действие: ", reply_markup=playpass)
+        messages.append(msg)
+        for MMM in messages:
+            await add_message(state, MMM)
 
 
 @router.callback_query(F.data == 'foolpass')
@@ -551,6 +580,7 @@ async def fpass(callback: CallbackQuery, state: FSMContext, bot: Bot):
     # print("huyki")
     slovar = await state.get_data()
     if slovar["comp_takes"]:
+        messages = []
         print(f"Игрок пасанул и комп берет?")
         deck = slovar["Остаток колоды"]
         field = slovar["field"]
@@ -571,7 +601,8 @@ async def fpass(callback: CallbackQuery, state: FSMContext, bot: Bot):
                 if len(comp_deck) < 6 and len(deck):
                     comp_deck.append(deck.pop(0))
                 if not (len(deck)):
-                    await callback.message.answer("Конец колоды!")
+                    msg = await callback.message.answer("Конец колоды!")
+                    messages.append(msg)
         slovar["Остаток колоды"] = deck
         slovar["field"] = field
         slovar["Колода компа"] = comp_deck
@@ -583,17 +614,21 @@ async def fpass(callback: CallbackQuery, state: FSMContext, bot: Bot):
         # await message.answer(stich_generic_trump_field_deck_message(player_deck, field, trump_type, deck, slovar["Айди"]))
         message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck, slovar["Айди"])
         document = FSInputFile(os.path.join(config.RESULT_PATH, f"fool_result_image_{slovar['Айди']}.jpg"))
-        await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
+        msg = await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
                              caption=message)
+        messages.append(msg)
         if slovar["attacker"] and not (len(field)):
-            await callback.message.answer(f"Выберите действие: ", reply_markup=playonly)
+            msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playonly)
         elif slovar["attacker"] and all(len(element) == 2 for element in field):
-            await callback.message.answer(f"Выберите действие: ", reply_markup=playbeaten)
+            msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playbeaten)
         elif not (slovar["attacker"]) and any(len(element) == 1 for element in field):
-            await callback.message.answer(f"Выберите действие: ", reply_markup=playtake)
+            msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playtake)
         else:
-            await callback.message.answer(f"Выберите действие: ", reply_markup=playpass)
+            msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playpass)
+        messages.append(msg)
         await callback.answer()
+        for MMM in messages:
+            await add_message(state, MMM)
     else:
         print(f"Игрок пасанул")
         await ai_turn(callback, state, bot)
@@ -627,7 +662,9 @@ async def fbeaten(callback: CallbackQuery, state: FSMContext, bot: Bot):
             if len(comp_deck) < 6 and len(deck):
                 comp_deck.append(deck.pop(0))
             if not (len(deck)):
-                await callback.message.answer("Конец колоды!")
+                msg = await callback.message.answer("Конец колоды!")
+            else:
+                msg = 0
     slovar["Колода игрока"] = player_deck
     slovar["Колода компа"] = comp_deck
     slovar["Остаток колоды"] = deck
@@ -636,7 +673,8 @@ async def fbeaten(callback: CallbackQuery, state: FSMContext, bot: Bot):
     await ai_turn(callback, state, bot)
     await callback.answer()
 
-
+    if msg:
+        await add_message(state, msg)
 @router.callback_query(F.data == 'menu')
 async def exit(callback: CallbackQuery, user_data: UserData, state: FSMContext, redis: RedisStorage):
     slovar = await state.get_data()
@@ -648,6 +686,7 @@ async def exit(callback: CallbackQuery, user_data: UserData, state: FSMContext, 
         user_data.fool_stats.total_games += 1
         user_data.fool_stats.wins += 1
         user_data.balance += 100
+    await delete_previous_message(state, callback.message)
     await redis.update_user(user_data.id, user_data)
     await state.clear()
     await Window.main_menu(callback.message, user_data, state)
