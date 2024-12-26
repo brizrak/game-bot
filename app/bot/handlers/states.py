@@ -6,3 +6,8 @@ class BlackjackStates(StatesGroup):
     start_play = State()
     itog = State()
     one_more = State()
+    end_game = State()
+
+
+class GlobalStates(StatesGroup):
+    menu = State()

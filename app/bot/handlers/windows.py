@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 
 from app.bot.utils.models import UserData
 from app.bot.handlers.delete_message import delete_previous_message, add_message
+from app.bot.handlers.states import GlobalStates
 
 
 def game_choice(text: str) -> InlineKeyboardMarkup:
@@ -20,17 +21,16 @@ def game_choice(text: str) -> InlineKeyboardMarkup:
 class Window:
     @staticmethod
     async def main_menu(message: Message, user_data: UserData, state: FSMContext, is_command: bool = False) -> None:
-        await delete_previous_message(state, message)
         text = f"Привет🖐\n\nВаш баланс: {user_data.balance}\nВаш счет: {user_data.score}\n\nВыберите игру:"
         reply_markup = game_choice("game")
         msg = await message.answer(text=text, reply_markup=reply_markup)
+        await delete_previous_message(state, message)
         await add_message(state, msg)
         if is_command:
             await message.delete()
 
     @staticmethod
     async def stats(message: Message, user_data: UserData, state: FSMContext) -> None:
-        await delete_previous_message(state, message)
         text = (f"Статистика:"
                 f"\n\nДвадцать одно:"
                 f"\n\tВсего игр: {user_data.blackjack_stats.total_games}"
@@ -48,15 +48,16 @@ class Window:
                 f"\n\tПоражений: {user_data.fool_stats.loses}"
                 f"\n\tНичьих: {user_data.fool_stats.draws}")
         msg = await message.answer(text=text)
+        await delete_previous_message(state, message)
         await add_message(state, msg)
         await message.delete()
 
     @staticmethod
     async def rules(message: Message, state: FSMContext) -> None:
-        await delete_previous_message(state, message)
         text = f"Выберите игру:"
         reply_markup = game_choice("rule")
         msg = await message.answer(text=text, reply_markup=reply_markup)
+        await delete_previous_message(state, message)
         await state.update_data(old_message=msg.message_id)
         await message.delete()
 

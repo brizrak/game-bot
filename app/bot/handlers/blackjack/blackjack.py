@@ -11,7 +11,7 @@ from PIL import Image
 from app.config import config
 from app.bot.handlers.blackjack.datas import lobby_list, create_deck, all_stavkas
 from app.bot.handlers.blackjack.keyboard import bet_kb, make_bet_kb, gg, gg1, gg2, final_kb, split_kb
-from app.bot.handlers.states import BlackjackStates
+from app.bot.handlers.states import BlackjackStates, GlobalStates
 from app.bot.handlers.delete_message import delete_previous_message, add_message
 from app.bot.utils.models import UserData
 from app.bot.utils.redis import RedisStorage
@@ -37,7 +37,14 @@ def scoring(deck):
     return score
 
 
-@router.callback_query(F.data == '21')
+@router.callback_query(F.data == 'menu')
+async def to_menu(callback: CallbackQuery, state: FSMContext, user_data: UserData):
+    await delete_previous_message(state, callback.message)
+    await state.clear()
+    await Window.main_menu(callback.message, user_data, state)
+
+
+@router.callback_query(F.data == 'game_21')
 async def play_start(callback: CallbackQuery, state: FSMContext):
     uid = callback.from_user.id
     slovar = await state.get_data()
@@ -410,12 +417,6 @@ async def double(message: Message, state: FSMContext, bot: Bot):
         messages.append(msg.message_id)
     slovar["old_messages"] = messages
     await state.update_data(slovar)
-
-
-@router.callback_query(F.data == 'menu')
-async def to_menu(callback: CallbackQuery, state: FSMContext, user_data: UserData):
-    await state.clear()
-    await Window.main_menu(callback.message, user_data, state)
 
 # @router.callback_query(F.data == 'lobby')
 # async def exit(callback:CallbackQuery,state:FSMContext):

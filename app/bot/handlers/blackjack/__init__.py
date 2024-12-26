@@ -1,6 +1,5 @@
-from .blackjack import play_start, router
+from .blackjack import router
 
 __all__ = [
-    "play_start",
     "router",
 ]
