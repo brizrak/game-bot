@@ -236,7 +236,7 @@ games = {}  # Словарь для хранения игр каждого по�
 
 @router.callback_query(F.data == 'game_sea')
 async def cmd_start(callback: CallbackQuery, state: FSMContext):
-    user_id = callback.message.from_user.id  # Получение ID пользователя
+    user_id = callback.from_user.id  # Получение ID пользователя
     game = SeaBattle()  # Создание новой игры
     games[user_id] = game  # Сохранение игры
     await state.set_state(GameStates.waiting_for_player_move_letter)  # Установка состояния ожидания выбора буквы
