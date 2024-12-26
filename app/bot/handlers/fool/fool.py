@@ -229,8 +229,8 @@ async def play_start_fool(callback: CallbackQuery, state: FSMContext):
         "Добро пожаловать в Дурака!\n\n"
         "Правила игры:\n"
         "1. Никому не говорить об игре Дурак.\n"
-        "2. Побеждает тот, у кого первым кончаются карты."
-        "3. Игра не даст вам сделать ход не по правилам, потому больше вам ничего знать не надо", parse_mode="HTML", reply_markup=startupplayonly)
+        "2. Побеждает тот, у кого первым кончаются карты.\n"
+        "3. Игра не даст вам сделать ход не по правилам, потому больше вам ничего знать не надо.\n", parse_mode="HTML", reply_markup=startupplayonly)
     await state.update_data(slovar)
     await state.set_state(FoolStates.start_play)
     # await state.set_state(FoolStates.bet_chose)
