@@ -19,3 +19,10 @@ class FoolStates(StatesGroup):
     game_is_on = State()
     choosing_card = State()
     itog = State()
+
+
+class GameStates(StatesGroup):
+    waiting_for_player_move_letter = State()  # Ожидание выбора буквы игроком
+    waiting_for_player_move_number = State()  # Ожидание выбора цифры игроком
+    waiting_for_player_move_confirm = State()  # Ожидание подтверждения хода игрока
+    waiting_for_enemy_move = State()  # Ожидание хода противника
