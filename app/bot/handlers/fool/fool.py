@@ -12,8 +12,7 @@ from PIL import Image
 
 from app.config import config
 from app.bot.handlers.fool.datas import lobby_list, money, create_deck
-from app.bot.handlers.fool.keyboard import startupplayonly, playonly, playpass, playtake, playbeaten, final_kb, \
-    weirdfinal_kb
+from app.bot.handlers.fool.keyboard import startupplayonly, playonly, playpass, playtake, playbeaten, final_kb, weirdfinal_kb
 from app.bot.handlers.states import FoolStates
 
 from app.bot.utils.redis import RedisStorage
@@ -92,8 +91,7 @@ def card_value_as_int(given_card):
 
 
 def first_card_stronger_than_second_card(first_card, second_card, trump_type):
-    if (first_card[0] == trump_type and second_card[0] == trump_type) or (
-            first_card[0] != trump_type and second_card[0] != trump_type):
+    if (first_card[0] == trump_type and second_card[0] == trump_type) or (first_card[0] != trump_type and second_card[0] != trump_type):
         if card_value_as_int(first_card) > card_value_as_int(second_card):
             return True
     else:
@@ -102,15 +100,14 @@ def first_card_stronger_than_second_card(first_card, second_card, trump_type):
     return False
 
 
-def target_is_valid_card_to_play(given_card, given_field, trump_type, is_attacker):
+def target_is_valid_card_to_play(given_card, given_field, trump_type, opponent_deck_length, is_attacker):
     for element in given_field:
         if len(element) == 1:
-            if not (is_attacker) and (given_card[0] == element[0][0] or given_card[
-                0] == trump_type) and first_card_stronger_than_second_card(given_card, element[0], trump_type):
+            if not (is_attacker) and (given_card[0] == element[0][0] or given_card[0] == trump_type) and first_card_stronger_than_second_card(given_card, element[0], trump_type):
                 return True
-            elif is_attacker and element[0][1] == given_card[1]:
+            elif is_attacker and not(len(field) >= opponent_deck_length) and element[0][1] == given_card[1]:
                 return True
-        elif is_attacker and len(element) == 2 and (element[0][1] == given_card[1] or element[1][1] == given_card[1]):
+        elif is_attacker and not(len(field) >= opponent_deck_length) and len(element) == 2 and (element[0][1] == given_card[1] or element[1][1] == given_card[1]):
             return True
     return False
 
@@ -124,27 +121,33 @@ def highest_trump_card_value(given_deck, trump_type):
 
 
 def stich_generic_trump_field_deck_message(given_pdeck, given_cdeck, given_field, trump_type, given_leftover_deck, gid):
-    ldeck = 0
-    if len(given_leftover_deck) < 5:
-        ldeck = len(given_leftover_deck)
-    elif len(given_leftover_deck) < 13:
-        ldeck = 7
-    else:
-        ldeck = 12
     large_image = Image.open(os.path.join(config.PACK_PATH, "table.jpg"))
-    for i in range(ldeck):
-        small_image = Image.open(os.path.join(config.PACK_PATH, f"cardback.jpg"))
-        small_image = small_image.resize((200, 275))
-        pos = (50, 50 + 6 * i)  # Позиция для первого маленького изображения
-        large_image.paste(small_image, pos)
-
+    if len(given_leftover_deck):
+        ldeck = 0
+        if len(given_leftover_deck) < 5:
+            ldeck = len(given_leftover_deck)-1
+        elif len(given_leftover_deck) < 13:
+            ldeck = 7
+        else:
+            ldeck = 12
+        funky_number = len(given_leftover_deck) - 1
+        funky_image = Image.open(os.path.join(config.PACK_PATH, f"{given_leftover_deck[funky_number][1]}_{given_leftover_deck[funky_number][0]}.jpg"))
+        funky_image = funky_image.resize((200,275))
+        funky_pos = (50, 10)
+        large_image.paste(funky_image, funky_pos)
+        if ldeck > 0:
+            for i in range(ldeck):
+                small_image = Image.open(os.path.join(config.PACK_PATH, f"cardback.jpg"))
+                small_image = small_image.resize((200, 275))
+                pos = (50, 75 + 6 * i)  # Позиция для первого маленького изображения
+                large_image.paste(small_image, pos)
     pos_player = (0, 0)
     pos_field = (0, 0)
     pos_comp = (0, 0)
     center = 960 - 50 - (25 * len(given_pdeck))
     center_field = 960 - (125 * len(given_field))
-    print(f"center: {center}")
-    print(f"center_field: {center_field}")
+    #print(f"center: {center}")
+    #print(f"center_field: {center_field}") 
     index = 0
     for el in given_pdeck:
         # Открываем маленькие изображения
@@ -168,37 +171,37 @@ def stich_generic_trump_field_deck_message(given_pdeck, given_cdeck, given_field
     index = 0
     for element in given_field:
         microindex = 0
-        print(f"Попытка нарисовать поле, элемент: {element}")
+        #print(f"Попытка нарисовать поле, элемент: {element}")
         for elel in element:
             # Открываем маленькие изображения
-            # print(f"Попытка нарисовать поле, карта : {elel}; Элемент: {element}")
+            #print(f"Попытка нарисовать поле, карта : {elel}; Элемент: {element}")
             small_imagef = Image.open(os.path.join(config.PACK_PATH, f"{elel[1]}_{elel[0]}.jpg"))
             small_imagef = small_imagef.resize((200, 275))
             # Определяем позиции, где будем размещать маленькие изображения
-            pos_field = (
-            center_field + (250 * index), 255 + (45 * microindex))  # Позиция для первого маленького изображения
+            pos_field = (center_field + (250 * index), 255 + (45 * microindex))  # Позиция для первого маленького изображения
             microindex += 1
             # Накладываем маленькие изображения на большое
             large_image.paste(small_imagef, pos_field)
         index += 1
-
+        
     large_image.save(f"{config.RESULT_PATH}/fool_result_image_{gid}.jpg")
     the_message = f"Козырная масть: {type_to_ru_string(trump_type)}\n\n"
     if len(given_field):
         field_list = "Карты в игре: \n"
         for element in given_field:
             for elel in element:
-                field_list += f"{elel[1]} {type_to_ru_adj_string(elel[0])}    "
-            field_list += "\n"
-        the_message += field_list
-        the_message += "\n"
+                field_list+=f"{elel[1]} {type_to_ru_adj_string(elel[0])}    "
+            field_list+="\n"
+        the_message+=field_list
+        the_message+="\n"
     card_list = "Ваши карты: \n"
     for i in range(len(given_pdeck)):
-        card_list += f"{given_pdeck[i][1]} {type_to_ru_adj_string(given_pdeck[i][0])};  "
-        if not ((i + 1) % 4) or i == len(given_pdeck) - 1:
-            card_list += "\n"
-    the_message += card_list
+        card_list+=f"{given_pdeck[i][1]} {type_to_ru_adj_string(given_pdeck[i][0])};  "
+        if not((i+1)%4) or i == len(given_pdeck)-1:
+            card_list+="\n"
+    the_message+=card_list
     return the_message
+
 
 
 @router.callback_query(F.data == 'game_fool')
@@ -225,7 +228,9 @@ async def play_start_fool(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(
         "Добро пожаловать в Дурака!\n\n"
         "Правила игры:\n"
-        "я не буду объяснять правила дурака.\n", parse_mode="HTML", reply_markup=startupplayonly)
+        "1. Никому не говорить об игре Дурак.\n"
+        "2. Побеждает тот, у кого первым кончаются карты."
+        "3. Игра не даст вам сделать ход не по правилам, потому больше вам ничего знать не надо", parse_mode="HTML", reply_markup=startupplayonly)
     await state.update_data(slovar)
     await state.set_state(FoolStates.start_play)
     # await state.set_state(FoolStates.bet_chose)
@@ -301,8 +306,7 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
     ai_won = False
     if (len(player_deck) > 0 and len(comp_deck) > 0) or len(deck) or slovar["comp_takes"] or slovar["player_takes"]:
         should_get_a_turn = 1
-        print(
-            f"ИИшка пытаешься сходить, карт в колоде: {len(deck)}; карт у игрока и бота: {len(player_deck)}; {len(comp_deck)}")
+        #print(f"ИИшка пытаешься сходить, карт в колоде: {len(deck)}; карт у игрока и бота: {len(player_deck)}; {len(comp_deck)}")
         while should_get_a_turn > 0:
             # Ход компа
             comp_deck = sort_deck(comp_deck)
@@ -314,8 +318,7 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
                 for i in range(len(comp_deck)):
                     if i >= len(comp_deck):
                         break
-                    if (not (len(field)) or target_is_valid_card_to_play(comp_deck[i], field, trump_type,
-                                                                         not (attacker))):
+                    if (not (len(field)) or target_is_valid_card_to_play(comp_deck[i], field, trump_type, len(player_deck), not (attacker))):
                         if comp_deck[i][0] == trump_type:
                             if comp_first_trump_card == -1:
                                 comp_first_trump_card = i
@@ -369,9 +372,7 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
                     if len(element) == 1:
                         # пусть пробует сходить НЕ козырями.
                         for i in range(len(comp_deck)):
-                            if (comp_deck[i][0] == element[0][0] or comp_deck[i][
-                                0] == trump_type) and first_card_stronger_than_second_card(comp_deck[i], element[0],
-                                                                                           trump_type):
+                            if (comp_deck[i][0] == element[0][0] or comp_deck[i][0] == trump_type) and first_card_stronger_than_second_card(comp_deck[i], element[0], trump_type):
                                 if comp_deck[i][0] == trump_type:
                                     if comp_first_trump_card == -1:
                                         comp_first_trump_card = i
@@ -382,6 +383,9 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
                     if len(element) == 1 and comp_first_trump_card != -1:
                         # если не получилось закрыть все не козырями, пускай в дело козыри
                         element.append(comp_deck.pop(comp_first_trump_card))
+                if not(len(comp_deck)) and not(len(deck)) and not(slovar["comp_takes"]):
+                    ai_won = True
+                    break;           
                 if any(len(element) == 1 for element in field):
                     await callback.message.answer(f"Беру! Докидываете?")
                     print("Комп: Беру!")
@@ -414,8 +418,7 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
             field = slovar["field"]
             player_deck = slovar["Колода игрока"]
             # await message.answer(stich_generic_trump_field_deck_message(player_deck, field, trump_type, deck, slovar["Айди"]))
-            message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck,
-                                                             slovar["Айди"])
+            message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck,slovar["Айди"])
             document = FSInputFile(os.path.join(config.RESULT_PATH, f"fool_result_image_{slovar['Айди']}.jpg"))
             await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
                                  caption=message)
@@ -461,6 +464,7 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
 async def play_card(query: CallbackQuery, state: FSMContext, bot: Bot):
     slovar = await state.get_data()
     player_deck = slovar["Колода игрока"]
+    comp_deck = slovar["Колода компа"]
     deck = slovar["Остаток колоды"]
     trump_type = slovar["Козырь"]
     field = slovar["field"]
@@ -469,7 +473,7 @@ async def play_card(query: CallbackQuery, state: FSMContext, bot: Bot):
     builder = InlineKeyboardBuilder()
     builder.add(InlineKeyboardButton(text="Назад", callback_data=f"nope"))
     for i in range(len(player_deck)):
-        if not (len(field)) or target_is_valid_card_to_play(player_deck[i], field, trump_type, attacker):
+        if not (len(field)) or target_is_valid_card_to_play(player_deck[i], field, trump_type, len(comp_deck), attacker):
             the_string = f"{player_deck[i][1]} {type_to_ru_adj_string(player_deck[i][0])}"
             if player_deck[i][0] == trump_type:
                 the_string += "*"
@@ -494,17 +498,14 @@ async def playing_the_card_thing(query: CallbackQuery, state: FSMContext, bot: B
     attacker = slovar["attacker"]
     if query.data.startswith("cardnum_"):
         pdeck_card = int(query.data.split("_")[1])
-        if not (len(field)) or target_is_valid_card_to_play(player_deck[pdeck_card - 1], field, trump_type, attacker):
+        if not (len(field)) or target_is_valid_card_to_play(player_deck[pdeck_card - 1], field, trump_type, len(comp_deck), attacker):
             if not (attacker) and any(len(element) == 1 for element in field):
                 for element in field:
-                    if len(element) == 1 and (
-                            player_deck[pdeck_card - 1][0] == element[0][0] or player_deck[pdeck_card - 1][
-                        0] == trump_type) and first_card_stronger_than_second_card(player_deck[pdeck_card - 1],
-                                                                                   element[0], trump_type):
+                    if len(element) == 1 and (player_deck[pdeck_card - 1][0] == element[0][0] or player_deck[pdeck_card - 1][0] == trump_type) and first_card_stronger_than_second_card(player_deck[pdeck_card - 1],element[0], trump_type):
                         element.append(player_deck.pop(pdeck_card - 1))
                         break
                 # if not(any(len(element) == 1 for element in field)):
-                # break;
+                    # break;
             elif attacker:
                 field.append([player_deck.pop(pdeck_card - 1)])
             else:
@@ -513,8 +514,7 @@ async def playing_the_card_thing(query: CallbackQuery, state: FSMContext, bot: B
             slovar["field"] = field
             await state.update_data(slovar)
             # await query.message.answer(stich_generic_trump_field_deck_message(player_deck, field, trump_type, deck, slovar["Айди"]))
-            message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck,
-                                                             slovar["Айди"])
+            message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck, slovar["Айди"])
             document = FSInputFile(os.path.join(config.RESULT_PATH, f"fool_result_image_{slovar['Айди']}.jpg"))
             await bot.send_photo(chat_id=query.message.chat.id, photo=document,
                                  caption=message)
@@ -530,8 +530,7 @@ async def playing_the_card_thing(query: CallbackQuery, state: FSMContext, bot: B
             print("Вы не можете сыграть эту карту!")
     else:
         # await query.message.answer(stich_generic_trump_field_deck_message(player_deck, field, trump_type, deck, slovar["Айди"]))
-        message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck,
-                                                         slovar["Айди"])
+        message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck, slovar["Айди"])
         document = FSInputFile(os.path.join(config.RESULT_PATH, f"fool_result_image_{slovar['Айди']}.jpg"))
         await query.answer()
         await state.set_state(FoolStates.game_is_on)
@@ -582,8 +581,7 @@ async def fpass(callback: CallbackQuery, state: FSMContext, bot: Bot):
         trump_type = slovar["Козырь"]
         player_deck = slovar["Колода игрока"]
         # await message.answer(stich_generic_trump_field_deck_message(player_deck, field, trump_type, deck, slovar["Айди"]))
-        message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck,
-                                                         slovar["Айди"])
+        message = stich_generic_trump_field_deck_message(player_deck, comp_deck, field, trump_type, deck, slovar["Айди"])
         document = FSInputFile(os.path.join(config.RESULT_PATH, f"fool_result_image_{slovar['Айди']}.jpg"))
         await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
                              caption=message)
