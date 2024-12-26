@@ -1,6 +1,6 @@
 from aiogram import Dispatcher
 
-from app.bot.handlers import command, callback_query, blackjack
+from app.bot.handlers import command, callback_query, blackjack, fool
 
 
 async def include_routers(dp: Dispatcher) -> None:
@@ -8,4 +8,5 @@ async def include_routers(dp: Dispatcher) -> None:
         command.router,
         callback_query.router,
         blackjack.router,
+        fool.router,
     )
