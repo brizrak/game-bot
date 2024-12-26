@@ -105,9 +105,9 @@ def target_is_valid_card_to_play(given_card, given_field, trump_type, opponent_d
         if len(element) == 1:
             if not (is_attacker) and (given_card[0] == element[0][0] or given_card[0] == trump_type) and first_card_stronger_than_second_card(given_card, element[0], trump_type):
                 return True
-            elif is_attacker and not(len(field) >= opponent_deck_length) and element[0][1] == given_card[1]:
+            elif is_attacker and not(len(given_field) >= opponent_deck_length) and element[0][1] == given_card[1]:
                 return True
-        elif is_attacker and not(len(field) >= opponent_deck_length) and len(element) == 2 and (element[0][1] == given_card[1] or element[1][1] == given_card[1]):
+        elif is_attacker and not(len(given_field) >= opponent_deck_length) and len(element) == 2 and (element[0][1] == given_card[1] or element[1][1] == given_card[1]):
             return True
     return False
 
