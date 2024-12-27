@@ -657,7 +657,7 @@ async def fbeaten(callback: CallbackQuery, state: FSMContext, bot: Bot):
 
     if msg:
         await add_message(state, msg)
-@router.callback_query(F.data == 'menu')
+@router.callback_query(F.data == 'foolmenu')
 async def exit(callback: CallbackQuery, user_data: UserData, state: FSMContext, redis: RedisStorage):
     slovar = await state.get_data()
     user_data.fool_stats.total_games += 1
