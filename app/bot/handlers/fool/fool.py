@@ -12,7 +12,7 @@ from PIL import Image
 
 from app.config import config
 from app.bot.handlers.fool.datas import lobby_list, money, create_deck
-from app.bot.handlers.fool.keyboard import startupplayonly, playonly, playpass, playtake, playbeaten, final_kb, weirdfinal_kb
+from app.bot.handlers.fool.keyboard import startupplayonly, playonly, playpass, playtake, playbeaten, playenough, weirdfinal_kb
 from app.bot.handlers.states import FoolStates
 from app.bot.handlers.delete_message import delete_previous_message, add_message
 
@@ -202,6 +202,17 @@ def stich_generic_trump_field_deck_message(given_pdeck, given_cdeck, given_field
             card_list+="\n"
     the_message+=card_list
     return the_message
+    
+def choose_appropriate_response_keyboard(attacker, field):
+    if attacker:
+        if not(len(field)):
+            return playonly
+        if all(len(element) == 2 for element in field):
+            return playbeaten
+        return playenough
+    if any(len(element) == 1 for element in field):
+        return playtake 
+    return playpass 
 
 
 
@@ -289,10 +300,7 @@ async def start_game(callback: CallbackQuery, state: FSMContext, bot: Bot):
                          caption=message)
     messages.append(msg)
     # await callback.message.answer()
-    if slovar["attacker"]:
-        msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playonly)
-    else:
-        msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playtake)
+    msg = await callback.message.answer(f"Выберите действие: ", reply_markup=choose_appropriate_response_keyboard(slovar["attacker"], field))
         # await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
         # caption=f"Ваш счет: {player_score}\nСчет дилера: {comp_score}")
     messages.append(msg)
@@ -436,14 +444,7 @@ async def ai_turn(callback: CallbackQuery, state: FSMContext, bot: Bot):
             msg = await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
                                  caption=message)
             messages.append(msg)
-            if slovar["attacker"] and not (len(field)):
-                msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playonly)
-            elif slovar["attacker"] and all(len(element) == 2 for element in field):
-                msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playbeaten)
-            elif not (slovar["attacker"]) and any(len(element) == 1 for element in field):
-                msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playtake)
-            else:
-                msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playpass)
+            msg = await callback.message.answer(f"Выберите действие: ", reply_markup=choose_appropriate_response_keyboard(slovar["attacker"], field))
             messages.append(msg)
         else:
             print(f"Игрок проиграл: {len(deck)}; карт у игрока и бота: {len(player_deck)}; {len(comp_deck)}")
@@ -540,12 +541,7 @@ async def playing_the_card_thing(query: CallbackQuery, state: FSMContext, bot: B
             msg = await bot.send_photo(chat_id=query.message.chat.id, photo=document,
                                  caption=message)
             messages.append(msg)
-            if attacker and all(len(element) == 2 for element in field):
-                msg = await query.message.answer(f"Сыграть еще карту?", reply_markup=playbeaten)
-            elif not (attacker) and any(len(element) == 1 for element in field):
-                msg = await query.message.answer(f"Сыграть еще карту?", reply_markup=playtake)
-            else:
-                msg = await query.message.answer(f"Сыграть еще карту?", reply_markup=playpass)
+            msg = await query.message.answer(f"Сыграть еще карту?", reply_markup=choose_appropriate_response_keyboard(slovar["attacker"], field))
             messages.append(msg)
             await query.answer()
             await state.set_state(FoolStates.game_is_on)
@@ -561,18 +557,11 @@ async def playing_the_card_thing(query: CallbackQuery, state: FSMContext, bot: B
         await state.set_state(FoolStates.game_is_on)
         msg = await bot.send_photo(chat_id=query.message.chat.id, photo=document,
                              caption=message)
-            messages.append(msg)
-        if slovar["attacker"] and not (len(field)):
-            msg = await query.message.answer(f"Выберите действие: ", reply_markup=playonly)
-        elif slovar["attacker"] and all(len(element) == 2 for element in field):
-            msg = await query.message.answer(f"Выберите действие: ", reply_markup=playbeaten)
-        elif not (slovar["attacker"]) and any(len(element) == 1 for element in field):
-            msg = await query.message.answer(f"Выберите действие: ", reply_markup=playtake)
-        else:
-            msg = await query.message.answer(f"Выберите действие: ", reply_markup=playpass)
         messages.append(msg)
-        for MMM in messages:
-            await add_message(state, MMM)
+        msg = await query.message.answer(f"Выберите действие: ", reply_markup=choose_appropriate_response_keyboard(slovar["attacker"], field))
+        messages.append(msg)
+    for MMM in messages:
+        await add_message(state, MMM)
 
 
 @router.callback_query(F.data == 'foolpass')
@@ -617,14 +606,7 @@ async def fpass(callback: CallbackQuery, state: FSMContext, bot: Bot):
         msg = await bot.send_photo(chat_id=callback.message.chat.id, photo=document,
                              caption=message)
         messages.append(msg)
-        if slovar["attacker"] and not (len(field)):
-            msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playonly)
-        elif slovar["attacker"] and all(len(element) == 2 for element in field):
-            msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playbeaten)
-        elif not (slovar["attacker"]) and any(len(element) == 1 for element in field):
-            msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playtake)
-        else:
-            msg = await callback.message.answer(f"Выберите действие: ", reply_markup=playpass)
+        msg = await callback.message.answer(f"Выберите действие: ", reply_markup=choose_appropriate_response_keyboard(slovar["attacker"], field))
         messages.append(msg)
         await callback.answer()
         for MMM in messages:
