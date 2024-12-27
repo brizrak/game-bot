@@ -5,8 +5,10 @@ from aiogram.fsm.context import FSMContext
 from app.bot.utils.models import UserData
 from app.bot.handlers.delete_message import delete_previous_message, add_message
 from app.bot.handlers.states import GlobalStates
+from aiogram.fsm.state import StatesGroup, State
 
-
+class SStates(StatesGroup):
+    exit_st = State()
 def game_choice(text: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder().row(
         *[
@@ -21,11 +23,13 @@ def game_choice(text: str) -> InlineKeyboardMarkup:
 class Window:
     @staticmethod
     async def main_menu(message: Message, user_data: UserData, state: FSMContext, is_command: bool = False) -> None:
+        state.clear()
         text = f"Привет🖐\n\nВаш баланс: {user_data.balance}\nВаш счет: {user_data.score}\n\nВыберите игру:"
         reply_markup = game_choice("game")
         msg = await message.answer(text=text, reply_markup=reply_markup)
         await delete_previous_message(state, message)
         await add_message(state, msg)
+        state.set_state(SStates.exit_st)
         if is_command:
             await message.delete()
 
