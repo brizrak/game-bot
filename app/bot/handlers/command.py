@@ -15,6 +15,11 @@ async def handler(message: Message, user_data: UserData, state: FSMContext) -> N
     await Window.main_menu(message, user_data, state, True)
 
 
+@router.message(Command("money"))
+async def handler(message: Message, user_data: UserData, redis: RedisStorage, state: FSMContext) -> None:
+    await Window.plus_money(message, user_data, redis, state)
+
+
 @router.message(Command("stats"))
 async def handler(message: Message, user_data: UserData, state: FSMContext) -> None:
     await Window.stats(message, user_data, state)

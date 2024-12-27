@@ -6,9 +6,13 @@ from app.bot.utils.models import UserData
 from app.bot.handlers.delete_message import delete_previous_message, add_message
 from app.bot.handlers.states import GlobalStates
 from aiogram.fsm.state import StatesGroup, State
+from app.bot.utils.redis import RedisStorage
+
 
 class SStates(StatesGroup):
     exit_st = State()
+
+
 def game_choice(text: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder().row(
         *[
@@ -23,15 +27,28 @@ def game_choice(text: str) -> InlineKeyboardMarkup:
 class Window:
     @staticmethod
     async def main_menu(message: Message, user_data: UserData, state: FSMContext, is_command: bool = False) -> None:
-        state.clear()
+        await state.clear()
         text = f"Привет🖐\n\nВаш баланс: {user_data.balance}\nВаш счет: {user_data.score}\n\nВыберите игру:"
         reply_markup = game_choice("game")
         msg = await message.answer(text=text, reply_markup=reply_markup)
         await delete_previous_message(state, message)
         await add_message(state, msg)
-        state.set_state(SStates.exit_st)
+        await state.set_state(SStates.exit_st)
         if is_command:
             await message.delete()
+
+    @staticmethod
+    async def plus_money(message: Message, user_data: UserData, redis: RedisStorage, state: FSMContext) -> None:
+        if user_data.balance >= 1000:
+            text = "У вас достаточно денег"
+        else:
+            text = "Добавлено 1000 денег"
+            user_data.balance += 1000
+            await redis.update_user(user_data.id, user_data)
+        await delete_previous_message(state, message)
+        msg = await message.answer(text)
+        await add_message(state, msg)
+        await message.delete()
 
     @staticmethod
     async def stats(message: Message, user_data: UserData, state: FSMContext) -> None:

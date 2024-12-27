@@ -8,8 +8,9 @@ from aiogram.types import (
 async def setup(bot: Bot) -> None:
     commands = [
         BotCommand(command="start", description="Start bot"),
-        BotCommand(command="stats", description="Statistics"),
-        BotCommand(command="rules", description="Rules"),
+        BotCommand(command="money", description="Добавить денег"),
+        # BotCommand(command="stats", description="Statistics"),
+        # BotCommand(command="rules", description="Rules"),
     ]
 
     await bot.set_my_commands(
