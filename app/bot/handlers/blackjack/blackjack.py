@@ -70,7 +70,6 @@ async def play_start(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data == 'lobby')
-@router.callback_query(BlackjackStates.one_more)
 async def play(callback: CallbackQuery, state: FSMContext):
     slovar = await state.get_data()
     # Проверка наличия "Айди" в словаре
@@ -220,7 +219,7 @@ async def bet_make(callback: CallbackQuery, state: FSMContext, bot: Bot, user_da
 
 
 @router.message(F.text == "Взять карту")
-async def take_card(message: Message, state: FSMContext, bot: Bot):
+async def take_card(message: Message, state: FSMContext, user_data: UserData, bot: Bot):
     slovar = await state.get_data()
     messages = slovar["old_messages"]
     if not messages:
@@ -255,7 +254,7 @@ async def take_card(message: Message, state: FSMContext, bot: Bot):
                                    caption=f"Ваш счет: {player_score}\nСчет дилера: {comp_score}")
         messages.append(msg.message_id)
         if player_score > 21:
-            await message.answer("Вы проиграли!")
+            await message.answer(f"Вы проиграли! Ваш баланс: {user_data.balance}")
             msg = await message.answer(f"Хотите сыграть еще раз?", reply_markup=final_kb)
             messages.append(msg.message_id)
         else:
@@ -376,7 +375,7 @@ async def hvatit(message: Message, state: FSMContext, bot: Bot, user_data: UserD
 
 
 @router.message(F.text == "Удвоить ставку")
-async def double(message: Message, state: FSMContext, bot: Bot):
+async def double(message: Message, state: FSMContext, user_data: UserData, bot: Bot):
     slovar = await state.get_data()
     messages = slovar["old_messages"]
     if not messages:
@@ -408,7 +407,7 @@ async def double(message: Message, state: FSMContext, bot: Bot):
                                caption=f"Ваш счет: {player_score}\nСчет дилера: {comp_score}")
     messages.append(msg.message_id)
     if player_score > 21:
-        await message.answer("Вы проиграли!")
+        await message.answer(f"Вы проиграли! Ваш баланс: {user_data.balance}")
         time.sleep(1)
         msg = await message.answer(f"Хотите сыграть еще раз?", reply_markup=final_kb)
         messages.append(msg.message_id)
