@@ -102,14 +102,18 @@ def first_card_stronger_than_second_card(first_card, second_card, trump_type):
 
 
 def target_is_valid_card_to_play(given_card, given_field, trump_type, opponent_deck_length, is_attacker):
-    for element in given_field:
+    unbeaten_slots = 0
+    for el in given_field:
+        if len(el) == 1:
+            unbeaten_slots+=1
+    for element in given_field: 
         if len(element) == 1:
-            if not (is_attacker) and (given_card[0] == element[0][0] or given_card[0] == trump_type) and first_card_stronger_than_second_card(given_card, element[0], trump_type):
+            if not(is_attacker) and (given_card[0] == element[0][0] or given_card[0] == trump_type) and first_card_stronger_than_second_card(given_card, element[0], trump_type):
                 return True
-            elif is_attacker and not(len(given_field) >= opponent_deck_length) and element[0][1] == given_card[1]:
+            elif is_attacker and not(unbeaten_slots > opponent_deck_length) and element[0][1] == given_card[1]:
                 return True
-        elif is_attacker and not(len(given_field) >= opponent_deck_length) and len(element) == 2 and (element[0][1] == given_card[1] or element[1][1] == given_card[1]):
-            return True
+        elif is_attacker and not(unbeaten_slots > opponent_deck_length) and len(element) == 2 and (element[0][1] == given_card[1] or element[1][1] == given_card[1]):
+           return True
     return False
 
 
